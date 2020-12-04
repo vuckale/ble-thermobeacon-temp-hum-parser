@@ -13,11 +13,10 @@ get_value() {
 
 }
 
-while [ ${#out} -lt 1 ]
+while [ ${#out} -lt 1 ] && [ "$chrlen" != 289 ]
 do
 bluetoothctl_out=$( { printf 'scan on\n\n' ; sleep 10 ; printf 'quit \n\n' ; } | bluetoothctl)
 out=$( echo "$bluetoothctl_out" | grep -A 2 "Device $ENV_THERMO_BEACON_MAC ManufacturerData Value:")
-done
 chrlen=${#out}
 if [ "$chrlen" == 289 ]; then
     # get the string at the position 21 and check if not "..^.......*=..#." 
@@ -34,3 +33,4 @@ if [ "$chrlen" == 289 ]; then
         echo "$room_hum" | awk '{printf("%0.2f\n",$1)}'
     fi
 fi
+done
