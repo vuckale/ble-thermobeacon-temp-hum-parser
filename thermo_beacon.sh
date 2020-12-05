@@ -61,14 +61,18 @@ hex_temp1=$(echo "$out" | cut -d ' ' -f 14)
 hex_temp2=$(echo "$out" | cut -d ' ' -f 15)
 hex_hum1=$(echo "$out" | cut -d ' ' -f 16)
 hex_hum2=$(echo "$out" | cut -d ' ' -f 17)
+room_temp=$(echo $(get_value $hex_temp1 $hex_temp2) | awk '{printf("%0.2f",$1)}')
+room_hum=$(echo $(get_value $hex_hum1 $hex_hum2) | awk '{printf("%0.2f",$1)}')
 done
 
-if [ "$temp_flag" == 1 ]; then
-    room_temp=$(echo $(get_value $hex_temp1 $hex_temp2))
-    echo "$room_temp" | awk '{printf("%0.2f\n",$1)}'
-fi
-
-if [ "$hum_flag" == 1 ]; then
-    room_hum=$(echo $(get_value $hex_hum1 $hex_hum2))
-    echo "$room_hum" | awk '{printf("%0.2f\n",$1)}'
+flags=$(( $temp_flag+$hum_flag ))
+if [ "$flags" == 2 ]; then
+    echo "$room_temp $room_hum"
+else
+    if [ "$temp_flag" == 1 ]; then
+        echo "$room_temp"
+    fi
+    if [ "$hum_flag" == 1 ]; then
+        echo "$room_hum"
+    fi
 fi
