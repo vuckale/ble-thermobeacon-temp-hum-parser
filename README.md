@@ -12,5 +12,6 @@ usage: ./thermo_beacon.sh [options]
 options: -h              this help
          --temperature   get temperature value in C°
          --humidity      get humidity value in %
-         --csv           output csv formatted line (both --temperature and --humidity are automatically set - if you set them individually they'll be ignored)
+         --csv           output csv formatted line with temperature and
+         humidity (--temperature and --humidity are automatically set)
 ```
