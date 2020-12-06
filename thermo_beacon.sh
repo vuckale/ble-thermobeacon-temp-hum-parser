@@ -13,18 +13,19 @@ function get_value() {
 
 }
 
-function usage()
-{
+function usage() {
     me=`basename "$0"`
     echo "script name: $me"
     echo "usage: "./$me" [options]"
     echo "options: -h              this help
          --temperature   get temperature value in C°
-         --humidity      get humidity value in %"
+         --humidity      get humidity value in %
+         --csv           output csv formatted line (both --temperature and --humidity are automatically set - if you set them individually they'll be ignored)"
 }
 
 temp_flag=0
 hum_flag=0
+csv_flag=0
 while [ "$1" != "" ]; do
     PARAM=`echo $1 | awk -F= '{print $1}'`
     # VALUE=`echo $1 | awk -F= '{print $2}'`
@@ -39,6 +40,11 @@ while [ "$1" != "" ]; do
         --humidity)
             hum_flag=1
             ;;
+        --csv)
+            csv_flag=1
+            temp_flag=1
+            hum_flag=1
+            ;;
         *)
             echo "ERROR: unknown parameter \"$PARAM\""
             usage
@@ -47,32 +53,39 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
-
-checker_trimmed="..^.......*=..#."
-while [ ${#out} -lt 1 ] || [ "$chrlen" != 289 ] || [ "$checker_trimmed" == "..^.......*=..#." ] || [ "$checker_trimmed" == "..^.......*=...." ]
+while true
 do
-bluetoothctl_out=$( { printf 'scan on\n\n' ; sleep 10 ; printf 'quit \n\n' ; } | bluetoothctl)
-out=$( echo "$bluetoothctl_out" | grep -A 2 "Device $ENV_THERMO_BEACON_MAC ManufacturerData Value:")
-chrlen=${#out}
-# get the string at the position 21 and check if not "..^.......*=..#."
-checker=$(echo "$out" | cut -d ' ' -f 21)
-checker_trimmed=`echo $checker`
-hex_temp1=$(echo "$out" | cut -d ' ' -f 14)
-hex_temp2=$(echo "$out" | cut -d ' ' -f 15)
-hex_hum1=$(echo "$out" | cut -d ' ' -f 16)
-hex_hum2=$(echo "$out" | cut -d ' ' -f 17)
-room_temp=$(echo $(get_value $hex_temp1 $hex_temp2) | awk '{printf("%0.2f",$1)}')
-room_hum=$(echo $(get_value $hex_hum1 $hex_hum2) | awk '{printf("%0.2f",$1)}')
-done
+	checker_trimmed="..^.......*=..#."
+	while [ ${#out} -lt 1 ] || [ "$chrlen" != 289 ] || [ "$checker_trimmed" == "..^.......*=..#." ] || [ "$checker_trimmed" == "..^.......*=...." ]
+	do
+		bluetoothctl_out=$( { printf 'scan on\n\n' ; sleep 10 ; printf 'quit \n\n' ; } | bluetoothctl)
+		out=$( echo "$bluetoothctl_out" | grep -A 2 "Device $ENV_THERMO_BEACON_MAC ManufacturerData Value:")
+		chrlen=${#out}
+		# get the string at the position 21 and check if not "..^.......*=..#."
+		checker=$(echo "$out" | cut -d ' ' -f 21)
+		checker_trimmed=`echo $checker`
+		hex_temp1=$(echo "$out" | cut -d ' ' -f 14)
+		hex_temp2=$(echo "$out" | cut -d ' ' -f 15)
+		hex_hum1=$(echo "$out" | cut -d ' ' -f 16)
+		hex_hum2=$(echo "$out" | cut -d ' ' -f 17)
+		room_temp=$(echo $(get_value $hex_temp1 $hex_temp2) | awk '{printf("%0.1f",$1)}')
+		room_hum=$(echo $(get_value $hex_hum1 $hex_hum2) | awk '{printf("%0.1f",$1)}')
+	done
 
-flags=$(( $temp_flag+$hum_flag ))
-if [ "$flags" == 2 ]; then
-    echo "$room_temp $room_hum"
-else
-    if [ "$temp_flag" == 1 ]; then
-        echo "$room_temp"
-    fi
-    if [ "$hum_flag" == 1 ]; then
-        echo "$room_hum"
-    fi
-fi
+	full=$(( $temp_flag & $hum_flag ))
+	if [ "$full" == 1 ]; then
+        if [ "$csv_flag" == 1 ]; then
+            echo "$(date);${room_temp}°C;${room_hum}%"
+        else
+            echo "${room_temp}°C ${room_hum}%"
+        fi
+    else
+		if [ "$temp_flag" == 1 ]; then
+		    echo "${room_temp}°C"
+		fi
+		if [ "$hum_flag" == 1 ]; then
+		    echo "${room_hum}%"
+		fi
+	fi
+  sleep 10
+done
