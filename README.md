@@ -1,6 +1,6 @@
 # bluetoothctl-thermobeacon-temp-hum-parser
 ### Description:
-A simple bash script that captures BLE packages, parses temperature and humidity values and prints them to `stdout`
+Simple bash and python scripts that capture BLE packages, parses temperature and humidity values and prints them. 
 ### Required packages:
 ```
 sudo apt install bluez mawk grep
